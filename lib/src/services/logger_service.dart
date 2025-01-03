@@ -26,7 +26,7 @@ class LoggerService extends BaseLoggerService {
       {String? userId,
       String? userName,
       required String env,
-      required String apiKey,
+      required String apiToken,
       required String appName,
       required String url,
       List<String> maskKeys = const []}) async {
@@ -40,7 +40,7 @@ class LoggerService extends BaseLoggerService {
 
     /// assigning values to appEnv and apiKey
     DeviceInfo.appEnv = env;
-    DeviceInfo.apiKey = apiKey;
+    DeviceInfo.apiToken = apiToken;
     _maskKeys = maskKeys;
     _url = url;
     final directory = await getApplicationDocumentsDirectory();
@@ -174,31 +174,29 @@ class LoggerService extends BaseLoggerService {
     Dio dio = DioClient().provideDio();
     try {
       Map<String, dynamic> req = {
+        /// project name should be same on panel
         "project": DeviceInfo.appName,
 
-        /// project name should be same on panel
+        /// app environment (dev, stage, prod)
         "env": DeviceInfo.appEnv,
 
-        /// app environment (dev, stage, prod)
+        /// utc formatted date
         "date": date,
 
-        /// utc formatted date
+        /// type of logs you want to upload (currently we support [error] and [custom])
         "log_type": logType ?? "custom",
 
-        /// type of logs you want to upload (currently we support [error] and [custom])
+        /// the file name that will appear on the log panel.
         "log_name": _logName(),
 
-        /// the file name that will appear on the log panel.
-        "content": log
-
         /// the content of the logs that you want to upload.
+        "content": log
       };
-      final String authToken =
-          '#Bearer ${DeviceInfo.appEnv} ${DeviceInfo.apiKey} ${DeviceInfo.appName}';
       final apiResponse = await Isolate.run(
         () async => await dio.post(_url,
             data: req,
-            options: Options(headers: {'Accept': 'application/json', 'Authorization': authToken})),
+            options: Options(
+                headers: {'Accept': 'application/json', 'Authorization': DeviceInfo.apiToken})),
       );
       return apiResponse.statusCode == 201;
     } catch (error) {

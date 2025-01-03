@@ -9,7 +9,7 @@ class ServerLogger {
       {String? userId,
       String? userName,
       required String env,
-      required String apiKey,
+      required String apiToken,
       required String appName,
       required String url,
       List<String> maskKeys = const []}) async {
@@ -17,7 +17,7 @@ class ServerLogger {
         userId: userId,
         userName: userName,
         env: env,
-        apiKey: apiKey,
+        apiToken: apiToken,
         appName: appName,
         url: url,
         maskKeys: maskKeys);

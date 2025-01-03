@@ -19,7 +19,7 @@ void main() async {
       url: '<Your API url>',
       userId: '2',
       env: 'dev',
-      apiKey: '<Your API key>',
+      apiToken: '<Auth token>',
       appName: 'mobile-test-2811',
       maskKeys: maskKeys);
   runApp(const MyApp());
