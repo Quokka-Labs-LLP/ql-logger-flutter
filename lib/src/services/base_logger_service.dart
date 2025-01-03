@@ -5,7 +5,7 @@ abstract class BaseLoggerService {
       {String userId,
       String? userName,
       required String env,
-      required String apiKey,
+      required String apiToken,
       required String appName,
       required String url,
       List<String> maskKeys = const []});

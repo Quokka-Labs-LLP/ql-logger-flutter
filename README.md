@@ -37,14 +37,23 @@ main() async{
             userId: '<userId>',   //<Optional> Logs will be stored or handled separately for each user based on their unique user ID.
             userName: '<userName>', //<Optional> Logs will be stored or handled separately for each user based on their unique user name.
             env: '<environment>',   // Specifies the current project environment (e.g., 'dev' for development).
-            apiKey:'<API Key>',   // API key used for authentication. Obtain this apiKey from the
-                             //   log panel, where your project/<env> is listed.
+            apiToken:'<Auth token>',   // use your API's authorization token here.
             appName: '<App Name>',   // You will get the app name from logger panel 
             url: '<Logger Url>',   // URL where logs will be stored.
             maskKeys: '<Mask Keys>'  // Keys to be masked in your logs.
   );
   ///......
 }
+```
+
+Make sure that the API which you are using here should accept the following keys. 
+```text
+project
+env
+date
+log_type
+log_name
+content
 ```
   
 The [initLoggerService] method contains the [upload] method, which automatically uploads your previously recorded logs.
@@ -53,7 +62,7 @@ The [initLoggerService] method contains the [upload] method, which automatically
 For recording the logs, you have to call [ServerLogger.log()] method:
 ```dart
 import 'package:ql_logger_flutter/server_logs.dart';
-    /// Use this function where you want to record your log. 
+    /// Use this function to record your log. 
     ServerLogger.log(
          message: '<Message>',   // Log message or event details to be stored.
          logType: '<Log Type>'   // logType is used to define the type of logs you want to store  
