@@ -8,7 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:ql_logger_flutter/server_logs.dart';
+import 'package:ql_logger_flutter/ql_logger_flutter.dart';
 import 'package:ql_logger_flutter/src/api_services/dio_client.dart';
 import 'package:ql_logger_flutter/src/device_info.dart';
 
