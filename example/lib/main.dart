@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ql_logger_flutter/server_logs.dart';
+import 'package:ql_logger_flutter/ql_logger_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

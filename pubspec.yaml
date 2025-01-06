@@ -1,7 +1,7 @@
 name: ql_logger_flutter
 description: A new Flutter project.
 version: 0.0.1
-homepage:
+homepage: https://github.com/Quokka-Labs-LLP/ql-logger-flutter
 
 environment:
   sdk: ">=2.19.0 <4.0.0"

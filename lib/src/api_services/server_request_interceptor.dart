@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:ql_logger_flutter/server_logs.dart';
+import 'package:ql_logger_flutter/ql_logger_flutter.dart';
 import 'package:ql_logger_flutter/src/device_info.dart';
 
 class ServerRequestInterceptor extends Interceptor {
