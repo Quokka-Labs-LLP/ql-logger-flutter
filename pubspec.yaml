@@ -1,5 +1,5 @@
 name: ql_logger_flutter
-description: A new Flutter project.
+description: Flutter package to easily record the logs on your server.
 version: 0.0.1
 homepage: https://github.com/Quokka-Labs-LLP/ql-logger-flutter
 
