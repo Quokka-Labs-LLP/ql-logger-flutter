@@ -1,5 +1,3 @@
-library ql_logger_flutter;
-
 import 'dart:io';
 import 'dart:isolate';
 
@@ -30,17 +28,19 @@ class LoggerService extends BaseLoggerService {
       required String appName,
       required String url,
       List<String> maskKeys = const []}) async {
+    DeviceInfo deviceInfo = DeviceInfo.instance;
+
     /// [DeviceInfo.setDeviceInfo()] is used to set device/app information.
-    DeviceInfo.setDeviceInfo();
-    DeviceInfo.appName = appName;
+    deviceInfo.setDeviceInfo();
+    deviceInfo.appName = appName;
 
     /// [_userId] is used to store particular logs of a particular user.
-    DeviceInfo.userId = userId;
-    DeviceInfo.userName = userName;
+    deviceInfo.userId = userId;
+    deviceInfo.userName = userName;
 
     /// assigning values to appEnv and apiKey
-    DeviceInfo.appEnv = env;
-    DeviceInfo.apiToken = apiToken;
+    deviceInfo.appEnv = env;
+    deviceInfo.apiToken = apiToken;
     _maskKeys = maskKeys;
     _url = url;
     final directory = await getApplicationDocumentsDirectory();
@@ -56,8 +56,11 @@ class LoggerService extends BaseLoggerService {
       String permissionsContent = await _getPermissionStatus();
       String fileName = content.path.split('/').last;
       bool isLogsUploaded = await _uploadLogsApi(
-          '$permissionsContent\n${content.readAsStringSync()}', fileName.replaceAll('.txt', ''),
-          logType: DeviceInfo.userId != null ? LogType.user.name : LogType.open.name);
+          '$permissionsContent\n${content.readAsStringSync()}',
+          fileName.replaceAll('.txt', ''),
+          logType: deviceInfo.userId != null
+              ? LogType.user.name
+              : LogType.open.name);
       if (isLogsUploaded) {
         if (!(fileName.contains('${_currentDate()}.txt'))) {
           element.deleteSync();
@@ -72,10 +75,11 @@ class LoggerService extends BaseLoggerService {
   Future<void> log({required String message, String? logType}) async {
     assert(_logFile != null, "Logger is not initialized");
     if (_logFile == null) return;
+    DeviceInfo deviceInfo = DeviceInfo.instance;
     final logEntry =
         '\n\n***************************************************************************'
-        '\n${DeviceInfo.appName}(${DeviceInfo.deviceOS}) | ${DeviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC]   (appName | appVersion | time)'
-        '\n${DeviceInfo.deviceDetail}\n'
+        '\n${deviceInfo.appName}(${deviceInfo.deviceOS}) | ${deviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC]   (appName | appVersion | time)'
+        '\n${deviceInfo.deviceDetail}\n'
         '\n${_maskUserData(message)}'
         '\n***************************************************************************';
     Isolate.run(
@@ -87,18 +91,22 @@ class LoggerService extends BaseLoggerService {
       },
     );
     if (logType == LogType.error.name) {
-      await _uploadLogsApi(logEntry, _currentDate(), logType: LogType.error.name);
+      await _uploadLogsApi(logEntry, _currentDate(),
+          logType: LogType.error.name);
     }
   }
 
   String _maskUserData(String content) {
     String maskKeys =
         '${_maskKeys.isEmpty ? '' : '${_maskKeys.join('|')}|'}password|pass|pwd|firstName|lastName|name|first_name|last_name|fName|lName';
-    content = content.replaceAllMapped(RegExp('($maskKeys):\\s*([^\\s,}]+(?:\\s[^\\s,}]+)*)'),
-        (match) => '${match.group(1)}: ********'); // this is used to mask user details.
+    content = content.replaceAllMapped(
+        RegExp('($maskKeys):\\s*([^\\s,}]+(?:\\s[^\\s,}]+)*)'),
+        (match) =>
+            '${match.group(1)}: ********'); // this is used to mask user details.
     content = content.replaceAllMapped(
       RegExp(r'(\b\w)(\w+)(@\w+\.\w+\b)'), // this is used to mask email
-      (match) => '${match.group(1)}${'*' * match.group(2)!.length}${match.group(3)}',
+      (match) =>
+          '${match.group(1)}${'*' * match.group(2)!.length}${match.group(3)}',
     );
     content = _maskPhoneNumbers(content);
     content = _maskDomains(content);
@@ -108,8 +116,8 @@ class LoggerService extends BaseLoggerService {
 
   String _maskDomains(String content) {
     // Regular expression to match domains and URLs
-    RegExp domainRegex =
-        RegExp(r'\b(?:https?://|www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?\b');
+    RegExp domainRegex = RegExp(
+        r'\b(?:https?://|www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?\b');
 
     // Replace all domains with '[REDACTED]'
     return content.replaceAll(domainRegex, '[REDACTED]');
@@ -117,7 +125,8 @@ class LoggerService extends BaseLoggerService {
 
   String _maskPhoneNumbers(String content) {
     // Regex to match different mobile number formats
-    final phoneRegex = RegExp(r'(\+?\d{1,3}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{4})');
+    final phoneRegex = RegExp(
+        r'(\+?\d{1,3}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{4})');
 
     // Replace middle parts of the phone number with stars
     content = content.replaceAllMapped(
@@ -132,10 +141,10 @@ class LoggerService extends BaseLoggerService {
   }
 
   @override
-  Future<void> getLogFile() async {
+  Future<String> getLogFile() async {
     assert(_logFile != null, "Logger is not initialized");
-    if (_logFile == null) return;
-    _logFile?.readAsStringSync();
+    if (_logFile == null) return '';
+    return _logFile?.readAsStringSync() ?? '';
   }
 
   /// Delete the log file content after sending logs to the server
@@ -154,14 +163,18 @@ class LoggerService extends BaseLoggerService {
 
   ///[uploadTodayLogs] is used to upload log file.
   @override
-  Future uploadTodayLogs({String? logType}) async {
+  Future<String> uploadTodayLogs({String? logType}) async {
     try {
       assert(_logFile != null, "Logger is not initialized");
-      if (_logFile == null) return;
-      bool isLogsUploaded =
-          await _uploadLogsApi(_logFile!.readAsStringSync(), _currentDate(), logType: logType);
+      if (_logFile == null) return 'log not found.';
+      bool isLogsUploaded = await _uploadLogsApi(
+          _logFile!.readAsStringSync(), _currentDate(),
+          logType: logType);
       if (isLogsUploaded) {
         await clearTodayLogs();
+        return 'Logs uploaded.';
+      } else {
+        return 'Error in uploading logs.';
       }
     } catch (error) {
       return error.toString();
@@ -169,16 +182,18 @@ class LoggerService extends BaseLoggerService {
   }
 
   /// [_uploadLogsApi] method is used to call the server logs API.
-  Future<bool> _uploadLogsApi(String log, String date, {String? logType}) async {
+  Future<bool> _uploadLogsApi(String log, String date,
+      {String? logType}) async {
     if (log.isEmpty) return false;
     Dio dio = DioClient().provideDio();
     try {
+      DeviceInfo deviceInfo = DeviceInfo.instance;
       Map<String, dynamic> req = {
         /// project name should be same on panel
-        "project": DeviceInfo.appName,
+        "project": deviceInfo.appName,
 
         /// app environment (dev, stage, prod)
-        "env": DeviceInfo.appEnv,
+        "env": deviceInfo.appEnv,
 
         /// utc formatted date
         "date": date,
@@ -195,8 +210,10 @@ class LoggerService extends BaseLoggerService {
       final apiResponse = await Isolate.run(
         () async => await dio.post(_url,
             data: req,
-            options: Options(
-                headers: {'Accept': 'application/json', 'Authorization': DeviceInfo.apiToken})),
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Authorization': deviceInfo.apiToken
+            })),
       );
       return apiResponse.statusCode == 201;
     } catch (error) {
@@ -206,10 +223,11 @@ class LoggerService extends BaseLoggerService {
 
   /// this function is used to get the log name based on whether the user ID exists or not.
   String _logName() {
-    if (DeviceInfo.userId != null) {
-      return '${DeviceInfo.userName ?? 'User'}_${DeviceInfo.userId ?? 'id'}.log';
+    DeviceInfo deviceInfo = DeviceInfo.instance;
+    if (deviceInfo.userId != null) {
+      return '${deviceInfo.userName ?? 'User'}_${deviceInfo.userId ?? 'id'}.log';
     }
-    return '${DeviceInfo.deviceID}.log';
+    return '${deviceInfo.deviceID}.log';
   }
 
   /// this function is used to return the current date.
@@ -226,21 +244,25 @@ class LoggerService extends BaseLoggerService {
   /// This function used to get the Configuration of the user.
   @override
   UserConfig getUserConfig() {
-    return UserConfig(userId: DeviceInfo.userId, userName: DeviceInfo.userName);
+    DeviceInfo deviceInfo = DeviceInfo.instance;
+    return UserConfig(userId: deviceInfo.userId, userName: deviceInfo.userName);
   }
 
   /// This function used to set the Configuration of the user.
   @override
   void setUserConfig({required UserConfig config}) async {
+    DeviceInfo deviceInfo = DeviceInfo.instance;
     await uploadTodayLogs(
-        logType: DeviceInfo.userId != null ? LogType.user.name : LogType.open.name);
-    DeviceInfo.userName = config.userName;
-    DeviceInfo.userId = config.userId;
+        logType:
+            deviceInfo.userId != null ? LogType.user.name : LogType.open.name);
+    deviceInfo.userName = config.userName;
+    deviceInfo.userId = config.userId;
   }
 
   /// This function used to get the permission status of all the permissions.
   Future<String> _getPermissionStatus() async {
-    String permissionStatusText = '\n|||||||||||||||[PERMISSIONS]||||||||||||||||\n';
+    String permissionStatusText =
+        '\n|||||||||||||||[PERMISSIONS]||||||||||||||||\n';
     permissionStatusText +=
         '||  Audio                      : ${(await Permission.audio.status).name}\t  ||\n'
         '||  Assistant                  : ${(await Permission.assistant.status).name}\t  ||\n'

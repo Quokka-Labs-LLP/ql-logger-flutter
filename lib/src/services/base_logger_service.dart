@@ -14,5 +14,5 @@ abstract class BaseLoggerService {
   Future<void> clearTodayLogs();
   UserConfig getUserConfig();
   void setUserConfig({required UserConfig config});
-  Future uploadTodayLogs();
+  Future<String> uploadTodayLogs();
 }

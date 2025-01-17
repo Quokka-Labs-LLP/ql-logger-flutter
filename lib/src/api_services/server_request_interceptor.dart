@@ -4,7 +4,8 @@ import 'package:ql_logger_flutter/src/device_info.dart';
 
 class ServerRequestInterceptor extends Interceptor {
   @override
-  void onError(final DioException err, final ErrorInterceptorHandler handler) async {
+  void onError(
+      final DioException err, final ErrorInterceptorHandler handler) async {
     ServerLogger.log(
         message:
             '[${err.requestOptions.method}] ${err.requestOptions.uri}\nError Response: ${err.requestOptions.uri}\n${err.response}',
@@ -18,8 +19,11 @@ class ServerRequestInterceptor extends Interceptor {
     final RequestInterceptorHandler handler,
   ) async {
     ServerLogger.log(
-        message: '[${options.method}] ${options.uri}\nRequest Params: ${options.data}',
-        logType: DeviceInfo.userId != null ? LogType.user.name : LogType.open.name);
+        message:
+            '[${options.method}] ${options.uri}\nRequest Params: ${options.data}',
+        logType: DeviceInfo.instance.userId != null
+            ? LogType.user.name
+            : LogType.open.name);
     return super.onRequest(options, handler);
   }
 
@@ -31,7 +35,9 @@ class ServerRequestInterceptor extends Interceptor {
     ServerLogger.log(
         message:
             '[${response.requestOptions.method}] ${response.requestOptions..uri}\nResponse: ${response.requestOptions}\n${response.data}',
-        logType: DeviceInfo.userId != null ? LogType.user.name : LogType.open.name);
+        logType: DeviceInfo.instance.userId != null
+            ? LogType.user.name
+            : LogType.open.name);
     return super.onResponse(response, handler);
   }
 }

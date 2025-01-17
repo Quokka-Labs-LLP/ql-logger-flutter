@@ -29,13 +29,13 @@ class ServerLogger {
   }
 
   /// This function is used to get logs from mobile directory
-  static Future<void> getLog() async {
-    await loggerService.getLogFile();
+  static Future<String> getLog() async {
+    return await loggerService.getLogFile();
   }
 
   /// This function is used to upload logs from mobile directory to server
-  static Future uploadTodayLogs() async {
-    await loggerService.uploadTodayLogs();
+  static Future<String> uploadTodayLogs() async {
+    return await loggerService.uploadTodayLogs();
   }
 
   /// This function used to get the configuration of the user.

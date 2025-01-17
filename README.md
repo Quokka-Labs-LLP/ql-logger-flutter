@@ -1,6 +1,4 @@
-# Welcome to the Repository
-
-This is a default README file for the repository.
+# ql_logger_flutter
 =======
 A package for efficiently storing and uploading server logs, designed to help developers
 track and manage log data from past events for debugging and monitoring purposes.
@@ -11,14 +9,6 @@ track and manage log data from past events for debugging and monitoring purposes
 |    ✅    |  ✅  |   ✅   |   ✅   |    ✅    |
 
 ## Setup Instructions ##
-
-# add the ql_logger_flutter in the pubspec.yaml file
-```yaml
-dependencies:
-  ql_logger_flutter:
-    git:
-      url: https://github.com/Quokka-Labs-LLP/ql-logger-flutter.git
-```
 
 # Initialize the ql_logger_flutter into your application
 This package automatically masks sensitive information such as emails, mobile numbers, and domains. It also masks commonly used keys, including:
