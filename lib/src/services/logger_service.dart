@@ -136,7 +136,7 @@ class LoggerService extends BaseLoggerService {
     final logEntry = '''
   
 ***************************************************************************
-${deviceInfo.appName}(${deviceInfo.deviceOS}) | ${deviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC] | ${DateTime.now().toLocal()}[Local]
+${deviceInfo.appName}(${deviceInfo.deviceOS}) | ${deviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC] | ${DateTime.now().toLocal()}[${DateTime.now().toLocal().timeZoneName}, ${DateTime.now().toLocal().timeZoneOffset}]
 (appName | appVersion | time(UTC) | time(Local))
 ${deviceInfo.deviceDetail}
 
