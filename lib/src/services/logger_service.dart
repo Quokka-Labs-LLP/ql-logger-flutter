@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -20,76 +21,137 @@ class LoggerService extends BaseLoggerService {
 
   /// This override function [initLogFile] will initialize the log file into mobile directory.
   @override
-  Future<void> initLogFile(
-      {String? userId,
-      String? userName,
-      required String env,
-      required String apiToken,
-      required String appName,
-      required String url,
-      List<String> maskKeys = const []}) async {
+  Future<void> initLogFile({
+    String? userId,
+    String? userName,
+    required String env,
+    required String apiToken,
+    required String appName,
+    required String url,
+    List<String> maskKeys = const [],
+  }) async {
+    // Initialize device info
     DeviceInfo deviceInfo = DeviceInfo.instance;
-
-    /// [DeviceInfo.setDeviceInfo()] is used to set device/app information.
-    deviceInfo.setDeviceInfo();
+    deviceInfo.setDeviceInfo(); // Sets basic device/app details
     deviceInfo.appName = appName;
-
-    /// [_userId] is used to store particular logs of a particular user.
     deviceInfo.userId = userId;
     deviceInfo.userName = userName;
-
-    /// assigning values to appEnv and apiKey
     deviceInfo.appEnv = env;
     deviceInfo.apiToken = apiToken;
+
+    // Store global configuration
     _maskKeys = maskKeys;
     _url = url;
+
+    // Get application's document directory (used for storing logs)
     final directory = await getApplicationDocumentsDirectory();
     var logsDir = Directory('${directory.path}/logs');
+
+    // Initialize the log file for the current date
     _logFile = File('${logsDir.path}/${_currentDate()}.txt');
-    assert(_logFile != null, "unable to initialize log file");
+    assert(_logFile != null, "Unable to initialize log file");
+
+    // Ensure log file exists before writing
     if (!(await _logFile!.exists())) {
       await _logFile?.create(recursive: true);
     }
 
-    logsDir.listSync().map((element) async {
-      File content = File(element.path);
+    // Process existing logs safely
+    await for (var file in logsDir.list()) {
+      if (file is File) {
+        await _processLogFile(file);
+      }
+    }
+  }
+
+  /// Safe function to process log files
+  Future<void> _processLogFile(File file) async {
+    try {
+      // Get permissions info (if required for logging)
       String permissionsContent = await _getPermissionStatus();
-      String fileName = content.path.split('/').last;
+
+      // Read log file safely with fallback
+      String logData = await _safeReadLogFile(file);
+
+      // Extract filename (e.g., "5-3-2025.txt")
+      String fileName = file.path.split('/').last;
+
+      /// Upload log file to server
       bool isLogsUploaded = await _uploadLogsApi(
-          '$permissionsContent\n${content.readAsStringSync()}',
-          fileName.replaceAll('.txt', ''),
-          logType: deviceInfo.userId != null
-              ? LogType.user.name
-              : LogType.open.name);
+        '$permissionsContent\n$logData', // Send log content with permissions info
+        fileName.replaceAll('.txt', ''), // Remove ".txt" for filename
+        logType: DeviceInfo.instance.userId != null
+            ? LogType.user.name
+            : LogType.open.name,
+      );
+
+      /// Cleanup old logs if successfully uploaded
       if (isLogsUploaded) {
-        if (!(fileName.contains('${_currentDate()}.txt'))) {
-          element.deleteSync();
+        if (!fileName.contains('${_currentDate()}.txt')) {
+          await file.delete(); // Safely delete old logs
         } else {
-          clearTodayLogs();
+          await clearTodayLogs(); // Clear only today's logs after upload
         }
       }
-    }).toList();
+    } catch (e) {
+      assert(!kDebugMode, "Error processing log file: $e");
+    }
+  }
+
+  /// Safe function to read log files (prevents UTF-8 decoding errors)
+  Future<String> _safeReadLogFile(File file) async {
+    try {
+      // Attempt to read the file normally
+      return await file.readAsString(encoding: utf8);
+    } catch (e) {
+      assert(!kDebugMode, "UTF-8 Decoding Failed, Reading as Bytes: $e");
+      return await _readWithFallback(file);
+    }
+  }
+
+  /// Fallback method: Read log file as bytes to prevent `FileSystemException`
+  Future<String> _readWithFallback(File file) async {
+    try {
+      // Read file as bytes (raw data)
+      List<int> bytes = await file.readAsBytes();
+
+      // Decode bytes using UTF-8 with `allowMalformed: true` to prevent crashes
+      return utf8.decode(bytes, allowMalformed: true);
+    } catch (e) {
+      assert(!kDebugMode, "Failed to read file even as bytes: $e");
+      return "ERROR: Unable to read log file"; // Return error message instead of crashing
+    }
   }
 
   @override
   Future<void> log({required String message, String? logType}) async {
     assert(_logFile != null, "Logger is not initialized");
     if (_logFile == null) return;
+
     DeviceInfo deviceInfo = DeviceInfo.instance;
-    final logEntry =
-        '\n\n***************************************************************************'
-        '\n${deviceInfo.appName}(${deviceInfo.deviceOS}) | ${deviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC]   (appName | appVersion | time)'
-        '\n${deviceInfo.deviceDetail}\n'
-        '\n${_maskUserData(message)}'
-        '\n***************************************************************************';
-    Isolate.run(
-      () {
-        _logFile?.writeAsStringSync(
-          logEntry,
-          mode: FileMode.append,
-        );
-      },
-    );
+    final logEntry = '''
+  
+***************************************************************************
+${deviceInfo.appName}(${deviceInfo.deviceOS}) | ${deviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC] | ${DateTime.now().toLocal()}[${DateTime.now().toLocal().timeZoneName}, ${DateTime.now().toLocal().timeZoneOffset}]
+(appName | appVersion | time(UTC) | time(Local))
+${deviceInfo.deviceDetail}
+
+${_maskUserData(message)}
+***************************************************************************
+  ''';
+
+    // Asynchronous File Writing
+    try {
+      await _logFile!.writeAsString(
+        logEntry,
+        mode: FileMode.append,
+        flush: true, // Ensures data is written immediately
+      );
+    } catch (e) {
+      assert(!kDebugMode, "Error writing log: $e");
+    }
+
+    // Handle Error Log Upload
     if (logType == LogType.error.name) {
       await _uploadLogsApi(logEntry, _currentDate(),
           logType: LogType.error.name);
@@ -157,7 +219,7 @@ class LoggerService extends BaseLoggerService {
         await _logFile!.writeAsString('');
       }
     } catch (e) {
-      debugPrint("Error deleting log file: $e");
+      assert(!kDebugMode, "Error deleting log file: $e");
     }
   }
 
@@ -165,19 +227,28 @@ class LoggerService extends BaseLoggerService {
   @override
   Future<String> uploadTodayLogs({String? logType}) async {
     try {
-      assert(_logFile != null, "Logger is not initialized");
-      if (_logFile == null) return 'log not found.';
-      bool isLogsUploaded = await _uploadLogsApi(
-          _logFile!.readAsStringSync(), _currentDate(),
-          logType: logType);
+      // Check if logger is initialized
+      if (_logFile == null) {
+        return 'Logger is not initialized.';
+      }
+
+      // Read file asynchronously & safely
+      String logData = await _safeReadLogFile(_logFile!);
+
+      // Upload logs via API
+      bool isLogsUploaded =
+          await _uploadLogsApi(logData, _currentDate(), logType: logType);
+
+      // Clear logs if successfully uploaded
       if (isLogsUploaded) {
         await clearTodayLogs();
-        return 'Logs uploaded.';
+        return 'Logs uploaded successfully.';
       } else {
-        return 'Error in uploading logs.';
+        return 'Error uploading logs.';
       }
     } catch (error) {
-      return error.toString();
+      // Catch unexpected errors and return them
+      return 'Upload failed: ${error.toString()}';
     }
   }
 
