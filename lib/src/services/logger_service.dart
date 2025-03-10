@@ -80,7 +80,9 @@ class LoggerService extends BaseLoggerService {
       bool isLogsUploaded = await _uploadLogsApi(
         '$permissionsContent\n$logData', // Send log content with permissions info
         fileName.replaceAll('.txt', ''), // Remove ".txt" for filename
-        logType: DeviceInfo.instance.userId != null ? LogType.user.name : LogType.open.name,
+        logType: DeviceInfo.instance.userId != null
+            ? LogType.user.name
+            : LogType.open.name,
       );
 
       /// Cleanup old logs if successfully uploaded
@@ -159,18 +161,22 @@ ${_maskUserData(message)}
 
     // Handle Error Log Upload
     if (logType == LogType.error.name) {
-      await _uploadLogsApi(logEntry, _currentDate(), logType: LogType.error.name);
+      await _uploadLogsApi(logEntry, _currentDate(),
+          logType: LogType.error.name);
     }
   }
 
   String _maskUserData(String content) {
     String maskKeys =
         '${_maskKeys.isEmpty ? '' : '${_maskKeys.join('|')}|'}password|pass|pwd|firstName|lastName|name|first_name|last_name|fName|lName';
-    content = content.replaceAllMapped(RegExp('($maskKeys):\\s*([^\\s,}]+(?:\\s[^\\s,}]+)*)'),
-        (match) => '${match.group(1)}: ********'); // this is used to mask user details.
+    content = content.replaceAllMapped(
+        RegExp('($maskKeys):\\s*([^\\s,}]+(?:\\s[^\\s,}]+)*)'),
+        (match) =>
+            '${match.group(1)}: ********'); // this is used to mask user details.
     content = content.replaceAllMapped(
       RegExp(r'(\b\w)(\w+)(@\w+\.\w+\b)'), // this is used to mask email
-      (match) => '${match.group(1)}${'*' * match.group(2)!.length}${match.group(3)}',
+      (match) =>
+          '${match.group(1)}${'*' * match.group(2)!.length}${match.group(3)}',
     );
     content = _maskPhoneNumbers(content);
     content = _maskDomains(content);
@@ -180,8 +186,8 @@ ${_maskUserData(message)}
 
   String _maskDomains(String content) {
     // Regular expression to match domains and URLs
-    RegExp domainRegex =
-        RegExp(r'\b(?:https?://|www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?\b');
+    RegExp domainRegex = RegExp(
+        r'\b(?:https?://|www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?\b');
 
     // Replace all domains with '[REDACTED]'
     return content.replaceAll(domainRegex, '[REDACTED]');
@@ -189,7 +195,8 @@ ${_maskUserData(message)}
 
   String _maskPhoneNumbers(String content) {
     // Regex to match different mobile number formats
-    final phoneRegex = RegExp(r'(\+?\d{1,3}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{4})');
+    final phoneRegex = RegExp(
+        r'(\+?\d{1,3}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{2,4}[-.\s]?)?(\d{4})');
 
     // Replace middle parts of the phone number with stars
     content = content.replaceAllMapped(
@@ -237,7 +244,8 @@ ${_maskUserData(message)}
       String logData = await _safeReadLogFile(_logFile!);
 
       // Upload logs via API
-      bool isLogsUploaded = await _uploadLogsApi(logData, _currentDate(), logType: logType);
+      bool isLogsUploaded =
+          await _uploadLogsApi(logData, _currentDate(), logType: logType);
 
       // Clear logs if successfully uploaded
       if (isLogsUploaded) {
@@ -253,7 +261,8 @@ ${_maskUserData(message)}
   }
 
   /// [_uploadLogsApi] method is used to call the server logs API.
-  Future<bool> _uploadLogsApi(String log, String date, {String? logType}) async {
+  Future<bool> _uploadLogsApi(String log, String date,
+      {String? logType}) async {
     if (log.isEmpty) return false;
     Dio dio = DioClient().provideDio();
     try {
@@ -280,8 +289,10 @@ ${_maskUserData(message)}
       final apiResponse = await Isolate.run(
         () async => await dio.post(_url,
             data: req,
-            options: Options(
-                headers: {'Accept': 'application/json', 'Authorization': deviceInfo.apiToken})),
+            options: Options(headers: {
+              'Accept': 'application/json',
+              'Authorization': deviceInfo.apiToken
+            })),
       );
       return apiResponse.statusCode == 201;
     } catch (error) {
@@ -321,14 +332,16 @@ ${_maskUserData(message)}
   void setUserConfig({required UserConfig config}) async {
     DeviceInfo deviceInfo = DeviceInfo.instance;
     await uploadTodayLogs(
-        logType: deviceInfo.userId != null ? LogType.user.name : LogType.open.name);
+        logType:
+            deviceInfo.userId != null ? LogType.user.name : LogType.open.name);
     deviceInfo.userName = config.userName;
     deviceInfo.userId = config.userId;
   }
 
   /// This function used to get the permission status of all the permissions.
   Future<String> _getPermissionStatus() async {
-    String permissionStatusText = '\n|||||||||||||||[PERMISSIONS]||||||||||||||||\n';
+    String permissionStatusText =
+        '\n|||||||||||||||[PERMISSIONS]||||||||||||||||\n';
     permissionStatusText +=
         '||  Audio                      : ${(await Permission.audio.status).name}\t  ||\n'
         '||  Assistant                  : ${(await Permission.assistant.status).name}\t  ||\n'
