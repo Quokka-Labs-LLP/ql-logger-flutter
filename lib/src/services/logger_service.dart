@@ -94,9 +94,7 @@ class LoggerService extends BaseLoggerService {
         }
       }
     } catch (e) {
-      if (kDebugMode) {
-        print("Error processing log file: $e");
-      }
+      assert(!kDebugMode, "Error processing log file: $e");
     }
   }
 
@@ -106,9 +104,7 @@ class LoggerService extends BaseLoggerService {
       // Attempt to read the file normally
       return await file.readAsString(encoding: utf8);
     } catch (e) {
-      if (kDebugMode) {
-        print("UTF-8 Decoding Failed, Reading as Bytes: $e");
-      }
+      assert(!kDebugMode, "UTF-8 Decoding Failed, Reading as Bytes: $e");
       return await _readWithFallback(file);
     }
   }
@@ -122,9 +118,7 @@ class LoggerService extends BaseLoggerService {
       // Decode bytes using UTF-8 with `allowMalformed: true` to prevent crashes
       return utf8.decode(bytes, allowMalformed: true);
     } catch (e) {
-      if (kDebugMode) {
-        print("Failed to read file even as bytes: $e");
-      }
+      assert(!kDebugMode, "Failed to read file even as bytes: $e");
       return "ERROR: Unable to read log file"; // Return error message instead of crashing
     }
   }
@@ -154,9 +148,7 @@ ${_maskUserData(message)}
         flush: true, // Ensures data is written immediately
       );
     } catch (e) {
-      if (kDebugMode) {
-        print("Error writing log: $e");
-      }
+      assert(!kDebugMode, "Error writing log: $e");
     }
 
     // Handle Error Log Upload
@@ -227,7 +219,7 @@ ${_maskUserData(message)}
         await _logFile!.writeAsString('');
       }
     } catch (e) {
-      debugPrint("Error deleting log file: $e");
+      assert(!kDebugMode, "Error deleting log file: $e");
     }
   }
 
