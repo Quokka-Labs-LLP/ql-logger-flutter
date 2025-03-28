@@ -168,7 +168,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   text: 'Upload Today\'s Log'),
               _button(
                   onTap: () {
-                    _showSnackBar('Initialized: ${ServerLogger.isInitialized}', Colors.black);
+                    _showSnackBar('Initialized: ${ServerLogger.isInitialized}',
+                        Colors.black);
                   },
                   text: 'Check Logger State'),
               const SizedBox(
