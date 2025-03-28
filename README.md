@@ -30,7 +30,9 @@ main() async{
             apiToken:'<Auth token>',   // use your API's authorization token here.
             appName: '<App Name>',   // You will get the app name from logger panel 
             url: '<Logger Url>',   // URL where logs will be stored.
-            maskKeys: '<Mask Keys>'  // Keys to be masked in your logs.
+            maskKeys: '<Mask Keys>',  // Keys to be masked in your logs.
+            recordPermission: '<Record Permission>', // Key to enable or disable recording permissions. 
+            durationInMin: '<Duration>'  // Duration (in minutes) for periodically uploading logs.
   );
   ///......
 }
@@ -69,6 +71,30 @@ This will automatically record you api logs, no need to handle separately
   _dio.interceptors.add(ServerRequestInterceptor());
 ```
 
+# Logs uploading status
+Sets callbacks to handle the response and errors from the log upload API.
+```dart
+ServerLogger.logUploadingResponse(('<response>'){
+debugPrint('logger api success response: ${response.toString()}');
+}, onError: (e){
+debugPrint('logger api error response: ${e.toString()}');
+});
+```
+
+# Captures errors during an async log call.
+Set a callback function to handle exceptions that occur during logging.
+```dart
+ServerLogger.onException(onError: (error){
+debugPrint('log exception: ${error.toString()}');
+});
+```
+
+# Checks if the logger is initialized. 
+Checks if the logger service is ready before logging operations.
+
+```dart
+ServerLogger.isInitialized
+```
 
 ## Following functions used to 
 # Set your user's Configuration

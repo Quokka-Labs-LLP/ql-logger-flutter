@@ -9,7 +9,7 @@ class ServerRequestInterceptor extends Interceptor {
     ServerLogger.log(
         message:
             '[${err.requestOptions.method}] ${err.requestOptions.uri}\nError Response: ${err.requestOptions.uri}\n${err.response}',
-        logType: LogType.error.name);
+        logType: LogType.error);
     return super.onError(err, handler);
   }
 
@@ -21,9 +21,8 @@ class ServerRequestInterceptor extends Interceptor {
     ServerLogger.log(
         message:
             '[${options.method}] ${options.uri}\nRequest Params: ${options.data}',
-        logType: DeviceInfo.instance.userId != null
-            ? LogType.user.name
-            : LogType.open.name);
+        logType:
+            DeviceInfo.instance.userId != null ? LogType.user : LogType.open);
     return super.onRequest(options, handler);
   }
 
@@ -35,9 +34,8 @@ class ServerRequestInterceptor extends Interceptor {
     ServerLogger.log(
         message:
             '[${response.requestOptions.method}] ${response.requestOptions..uri}\nResponse: ${response.requestOptions}\n${response.data}',
-        logType: DeviceInfo.instance.userId != null
-            ? LogType.user.name
-            : LogType.open.name);
+        logType:
+            DeviceInfo.instance.userId != null ? LogType.user : LogType.open);
     return super.onResponse(response, handler);
   }
 }

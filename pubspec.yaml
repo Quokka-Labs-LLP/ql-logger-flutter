@@ -1,6 +1,6 @@
 name: ql_logger_flutter
 description: A package for efficiently storing and uploading server logs, designed to help developers track and manage log data from past events for debugging and monitoring purposes.
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/Quokka-Labs-LLP/ql-logger-flutter
 
 environment:

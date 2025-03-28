@@ -36,6 +36,6 @@ class DeviceInfo {
       deviceDetail =
           '${androidDeviceInfo.brand} | ${androidDeviceInfo.version.release} | $deviceID   (deviceName | osVersion | deviceId)';
     }
-    appVersion = info.version;
+    appVersion = '${info.version}(${info.buildNumber})';
   }
 }

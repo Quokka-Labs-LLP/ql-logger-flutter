@@ -15,13 +15,16 @@ void main() async {
     'f_name',
     'l_name',
   ];
-  await ServerLogger.initLoggerService(
-      url: '<Your API url>',
-      userId: '<User Id>',
-      env: '<Environment>',
-      apiToken: '<Auth token>',
-      appName: '<App Name>',
-      maskKeys: maskKeys);
+  ServerLogger.initLoggerService(
+    url: '<Your API url>',
+    userId: '<User Id>',
+    env: '<Environment>',
+    apiToken: '<Auth token>',
+    appName: '<App Name>',
+    maskKeys: maskKeys,
+    recordPermission: false,
+    durationInMin: 2,
+  );
   runApp(const MyApp());
 }
 
@@ -65,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future _addLog(String text, {LogType logType = LogType.user}) async {
     try {
-      await ServerLogger.log(message: text, logType: logType.name);
+      await ServerLogger.log(message: text, logType: logType);
       debugPrint('printing the stored logs: $text}');
       _showSnackBar('Log recorded', Colors.green);
     } catch (e) {
@@ -77,6 +80,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    ServerLogger.logUploadingResponse((response) {
+      debugPrint('logger api success response: ${response.toString()}');
+    }, onError: (e) {
+      debugPrint('logger api error response: ${e.toString()}');
+    });
+
+    ServerLogger.onException(onError: (error) {
+      debugPrint('log exception: ${error.toString()}');
+    });
+
     updateLogs();
     super.initState();
   }
@@ -153,6 +166,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     _showSnackBar(message, Colors.green);
                   },
                   text: 'Upload Today\'s Log'),
+              StatefulBuilder(builder: (context, updateState) {
+                return _button(
+                    onTap: () {
+                      updateState(() {
+                        ServerLogger.isInitialized;
+                      });
+                    },
+                    text:
+                        'Initialize: ${ServerLogger.isInitialized}, Update Logger State');
+              }),
               const SizedBox(
                 height: 10,
               ),
@@ -168,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
-                    color: Colors.grey.withOpacity(0.5)),
+                    color: Colors.grey.withValues(alpha: 0.5)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -239,16 +262,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _showSnackBar(String text, Color backgroundColor) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: backgroundColor,
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          backgroundColor: backgroundColor,
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          ),
+          duration: const Duration(seconds: 2),
         ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
   }
 
   _contentWidget({required String content, required Function() onUpdate}) {
