@@ -74,7 +74,7 @@ This will automatically record you api logs, no need to handle separately
 # Logs uploading status
 Sets callbacks to handle the response and errors from the log upload API.
 ```dart
-ServerLogger.logUploadingResponse(('<response>'){
+ServerLogger.logUploadingResponse((response){
 debugPrint('logger api success response: ${response.toString()}');
 }, onError: (e){
 debugPrint('logger api error response: ${e.toString()}');

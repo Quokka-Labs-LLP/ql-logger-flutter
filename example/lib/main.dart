@@ -166,16 +166,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     _showSnackBar(message, Colors.green);
                   },
                   text: 'Upload Today\'s Log'),
-              StatefulBuilder(builder: (context, updateState) {
-                return _button(
-                    onTap: () {
-                      updateState(() {
-                        ServerLogger.isInitialized;
-                      });
-                    },
-                    text:
-                        'Initialize: ${ServerLogger.isInitialized}, Update Logger State');
-              }),
+              _button(
+                  onTap: () {
+                    _showSnackBar('Initialized: ${ServerLogger.isInitialized}', Colors.black);
+                  },
+                  text: 'Check Logger State'),
               const SizedBox(
                 height: 10,
               ),
