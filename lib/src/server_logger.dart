@@ -15,7 +15,8 @@ class ServerLogger {
       required String url,
       List<String> maskKeys = const [],
       bool recordPermission = true,
-      int durationInMin = 3}) {
+      int durationInMin = 3,
+      recordNetworkLogs = false}) {
     loggerService.initLogFile(
         userId: userId,
         userName: userName,
@@ -25,12 +26,19 @@ class ServerLogger {
         url: url,
         maskKeys: maskKeys,
         recordPermission: recordPermission,
-        durationInMin: durationInMin);
+        durationInMin: durationInMin,
+        recordNetworkLogs: recordNetworkLogs);
   }
 
   /// This function is used to store log into mobile directory
-  static Future<void> log({required String message, LogType? logType}) async {
-    await loggerService.log(message: message, logType: logType);
+  static Future<void> log(
+      {required String message,
+      LogType? logType,
+      bool recordNetworkLogs = false}) async {
+    await loggerService.log(
+        message: message,
+        logType: logType,
+        recordNetworkLogs: recordNetworkLogs);
   }
 
   /// This function is used to get logs from mobile directory
@@ -70,3 +78,5 @@ class ServerLogger {
 }
 
 enum LogType { custom, error, user, open }
+
+enum NetworkStrengthType { good, poor, excellent, veryGood, fair, weak }

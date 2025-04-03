@@ -32,7 +32,8 @@ main() async{
             url: '<Logger Url>',   // URL where logs will be stored.
             maskKeys: '<Mask Keys>',  // Keys to be masked in your logs.
             recordPermission: '<Record Permission>', // Key to enable or disable recording permissions. 
-            durationInMin: '<Duration>'  // Duration (in minutes) for periodically uploading logs.
+            durationInMin: '<Duration>',  // Duration (in minutes) for periodically uploading logs.
+            recordNetworkLogs: '<Record Network Logs>'  // Enable or disable recording of network connection logs.
   );
   ///......
 }
@@ -57,8 +58,9 @@ import 'package:ql_logger_flutter/server_logs.dart';
     /// Use this function to record your log. 
     ServerLogger.log(
          message: '<Message>',   // Log message or event details to be stored.
-         logType: '<Log Type>'   // logType is used to define the type of logs you want to store  
+         logType: '<Log Type>',   // logType is used to define the type of logs you want to store  
                                 // available log type (custom/error/user/open)
+         recordNetworkLogs: '<Record Network Logs>'  //Enable or disable recording of network connection logs.
     );
 ```
 
