@@ -16,15 +16,15 @@ void main() async {
     'l_name',
   ];
   ServerLogger.initLoggerService(
-    url: '<Your API url>',
-    userId: '<User Id>',
-    env: '<Environment>',
-    apiToken: '<Auth token>',
-    appName: '<App Name>',
-    maskKeys: maskKeys,
-    recordPermission: false,
-    durationInMin: 2,
-  );
+      url: '<Your API url>',
+      userId: '<User Id>',
+      env: '<Environment>',
+      apiToken: '<Auth token>',
+      appName: '<App Name>',
+      maskKeys: maskKeys,
+      recordPermission: false,
+      durationInMin: 2,
+      recordNetworkLogs: false);
   runApp(const MyApp());
 }
 
@@ -68,7 +68,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future _addLog(String text, {LogType logType = LogType.user}) async {
     try {
-      await ServerLogger.log(message: text, logType: logType);
+      await ServerLogger.log(
+          message: text, logType: logType, recordNetworkLogs: true);
       debugPrint('printing the stored logs: $text}');
       _showSnackBar('Log recorded', Colors.green);
     } catch (e) {

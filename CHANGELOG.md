@@ -1,8 +1,13 @@
+## 0.0.5
+
+* Added an option to save network logs.
+* Minor bug fixes.
+
 ## 0.0.4
 
 * Added option to set the time interval for uploading the logs.
 * Added key to check the initialization status.
-* Provided the callback to get the status of 
+* Provided the callback to get the status of logger api.
 * Minor bug fixes.
 
 ## 0.0.3

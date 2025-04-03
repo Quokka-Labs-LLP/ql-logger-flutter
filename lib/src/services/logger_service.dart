@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_internet_signal/flutter_internet_signal.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -33,6 +34,9 @@ class LoggerService extends BaseLoggerService {
 
   bool get isInitialized => _isInitialized;
 
+  /// [_isRecordNetworkLogs] is used to enable or disable recording of network connection logs.
+  bool _isRecordNetworkLogs = false;
+
   /// This override function [initLogFile] will initialize the log file into mobile directory.
   @override
   void initLogFile(
@@ -44,7 +48,8 @@ class LoggerService extends BaseLoggerService {
       required String url,
       List<String> maskKeys = const [],
       bool recordPermission = true,
-      int durationInMin = 3}) async {
+      int durationInMin = 3,
+      recordNetworkLogs = false}) async {
     // Initialize device info
     DeviceInfo deviceInfo = DeviceInfo.instance;
     deviceInfo.setDeviceInfo(); // Sets basic device/app details
@@ -58,6 +63,7 @@ class LoggerService extends BaseLoggerService {
     _maskKeys = maskKeys;
     _url = url;
     _recordPermissionLogs = recordPermission;
+    _isRecordNetworkLogs = recordNetworkLogs;
     _handleLogFiles(durationInMin);
   }
 
@@ -165,22 +171,74 @@ class LoggerService extends BaseLoggerService {
     }
   }
 
+  /// [_internetConnectionChecker] checks the current network connectivity status
+  Future<(String, String)> _internetConnectionChecker() async {
+    final List<ConnectivityResult> connectivityResult =
+        await (Connectivity().checkConnectivity());
+    String connectedNetworks = connectivityResult
+        .map(
+          (e) => e.name,
+        )
+        .join(', ');
+    String networkStrength = '';
+    if (Platform.isAndroid) {
+      if (connectivityResult.contains(ConnectivityResult.mobile)) {
+        networkStrength = await _checkInternetStrength(true);
+      } else if (connectivityResult.contains(ConnectivityResult.wifi)) {
+        networkStrength = await _checkInternetStrength(false);
+      }
+    }
+    return (connectedNetworks, networkStrength);
+  }
+
+  ///[_checkInternetStrength] checks the signal strength of the current network connection.
+  /// [_checkInternetStrength] is supported only on Android.
+  Future<String> _checkInternetStrength(bool isConnectedToMobile) async {
+    final FlutterInternetSignal internetSignal = FlutterInternetSignal();
+    int? signal;
+    if (isConnectedToMobile) {
+      signal = await internetSignal.getMobileSignalStrength();
+    } else {
+      signal = await internetSignal.getWifiSignalStrength();
+    }
+    return '${_getNetworkStrength(signal ?? 0)}(${signal}dBm)';
+  }
+
+  ///[_getNetworkStrength] returns a descriptive network strength category based on the signal strength in dBm.
+  String _getNetworkStrength(int dBm) {
+    if (dBm >= -50) return NetworkStrengthType.excellent.name;
+    if (dBm >= -60) return NetworkStrengthType.veryGood.name;
+    if (dBm >= -70) return NetworkStrengthType.good.name;
+    if (dBm >= -85) return NetworkStrengthType.fair.name;
+    if (dBm >= -100) return NetworkStrengthType.weak.name;
+    return NetworkStrengthType.poor.name;
+  }
+
   @override
-  Future<void> log({required String message, LogType? logType}) async {
+  Future<void> log(
+      {required String message,
+      LogType? logType,
+      recordNetworkLogs = false}) async {
     assert(_logFile != null, "Logger is not initialized");
 
     /// Creates the log file if [_logFile] is not created or is null.
     if (_logFile == null) {
       await _createLogFile();
     }
-
+    String networkLogs = '';
+    if (_isRecordNetworkLogs || recordNetworkLogs) {
+      (String, String) internetData = await _internetConnectionChecker();
+      networkLogs = '''
+      \n ( ${internetData.$1} ${Platform.isAndroid ? '| ${internetData.$2}' : ''}) |  ( networkConnectionType ${Platform.isAndroid ? ' | networkStrength' : ''} )
+      ''';
+    }
     DeviceInfo deviceInfo = DeviceInfo.instance;
+
     final logEntry = '''
-  
 ***************************************************************************
 ${deviceInfo.appName}(${deviceInfo.deviceOS}) | ${deviceInfo.appVersion} | ${DateTime.now().toUtc()}[UTC] | ${DateTime.now().toLocal()}[${DateTime.now().toLocal().timeZoneName}, ${DateTime.now().toLocal().timeZoneOffset}]
 (appName | appVersion(buildNumber) | time(UTC) | time(Local))
-${deviceInfo.deviceDetail}
+${deviceInfo.deviceDetail} $networkLogs
 
 ${_maskUserData(message)}
 ***************************************************************************
