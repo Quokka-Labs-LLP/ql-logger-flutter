@@ -393,15 +393,17 @@ ${_maskUserData(message)}
         /// the content of the logs that you want to upload.
         "content": log
       };
-      Response apiResponse = await Isolate.run(
-        () async => await dio.post(_url,
-            data: req,
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Authorization': deviceInfo.apiToken
-            })),
-      );
+      late Response apiResponse;
 
+      if (kIsWeb) {
+        /// Execute the API call directly because web doesn't support isolates
+        apiResponse = await _uploadLogsRequest(dio, req, deviceInfo);
+      } else {
+        /// Run API call inside an isolate to keep UI thread free
+        apiResponse = await Isolate.run(
+              () => _uploadLogsRequest(dio, req, deviceInfo),
+        );
+      }
       if (logUploadingResponse != null) {
         logUploadingResponse!(apiResponse);
       }
@@ -413,6 +415,25 @@ ${_maskUserData(message)}
       return false;
     }
   }
+
+  /// Makes the actual API request to upload logs to the server.
+  Future<Response> _uploadLogsRequest(
+      Dio dio,
+      Map<String, dynamic> req,
+      DeviceInfo deviceInfo,
+      ) {
+    return dio.post(
+      _url,
+      data: req,
+      options: Options(
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': deviceInfo.apiToken,
+        },
+      ),
+    );
+  }
+
 
   /// [_createLogFile] creates a log file if it does not already exist.
   Future _createLogFile() async {

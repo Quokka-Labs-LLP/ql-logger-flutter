@@ -16,11 +16,12 @@ void main() async {
     'l_name',
   ];
   ServerLogger.initLoggerService(
-      url: '<Your API url>',
-      userId: '<User Id>',
-      env: '<Environment>',
-      apiToken: '<Auth token>',
-      appName: '<App Name>',
+      url: 'https://apis-logger.qkkalabs.com/api/v1/project/upload/log-mobile',
+      userId: '01',
+      userName: 'Test',
+      env: 'dev',
+      apiToken: '#Bearer dev o6A8wCdRkkXCUaYhZahHdqmf4zBTzhNG Mobile-test-1001',
+      appName: 'Mobile-test-1001',
       maskKeys: maskKeys,
       recordPermission: false,
       durationInMin: 2,
