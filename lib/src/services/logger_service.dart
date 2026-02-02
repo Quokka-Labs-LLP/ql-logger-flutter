@@ -199,7 +199,8 @@ class LoggerService extends BaseLoggerService {
     if (isConnectedToMobile) {
       signal = await internetSignal.getMobileSignalStrength();
     } else {
-      signal = await internetSignal.getWifiSignalStrength();
+      final wifiInfo = await internetSignal.getWifiSignalInfo();
+      signal = wifiInfo?.dbm;
     }
     return '${_getNetworkStrength(signal ?? 0)}(${signal}dBm)';
   }
@@ -429,7 +430,7 @@ ${_maskUserData(message)}
   String _logName() {
     DeviceInfo deviceInfo = DeviceInfo.instance;
     if (deviceInfo.userId != null) {
-      return '${deviceInfo.userName ?? 'User'}_${deviceInfo.userId ?? 'id'}.log';
+      return '${deviceInfo.userName ?? 'User'}_${deviceInfo.userId ?? 'id'}_${deviceInfo.deviceID}.log';
     }
     return '${deviceInfo.deviceID}.log';
   }
