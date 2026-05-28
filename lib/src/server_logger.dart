@@ -65,14 +65,14 @@ class ServerLogger {
   static bool get isInitialized => loggerService.isInitialized;
 
   /// [logUploadingResponse] sets callbacks to handle the response and errors from the log upload API.
-  static logUploadingResponse(Function(Response<dynamic> response)? response,
+  static void logUploadingResponse(Function(Response<dynamic> response)? response,
       {Function(dynamic)? onError}) {
     loggerService.logUploadingResponse = response;
     loggerService.onLogUploadingError = onError;
   }
 
   /// [onException] sets callback function to handle exceptions that occur during logging.
-  static onException({Function(dynamic)? onError}) {
+  static void onException({Function(dynamic)? onError}) {
     loggerService.onException = onError;
   }
 }
