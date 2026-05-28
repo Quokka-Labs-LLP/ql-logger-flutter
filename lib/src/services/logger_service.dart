@@ -199,7 +199,8 @@ class LoggerService extends BaseLoggerService {
     if (isConnectedToMobile) {
       signal = await internetSignal.getMobileSignalStrength();
     } else {
-      signal = await internetSignal.getWifiSignalStrength();
+      final wifiInfo = await internetSignal.getWifiSignalInfo();
+      signal = wifiInfo?.dbm;
     }
     return '${_getNetworkStrength(signal ?? 0)}(${signal}dBm)';
   }
@@ -392,15 +393,17 @@ ${_maskUserData(message)}
         /// the content of the logs that you want to upload.
         "content": log
       };
-      Response apiResponse = await Isolate.run(
-        () async => await dio.post(_url,
-            data: req,
-            options: Options(headers: {
-              'Accept': 'application/json',
-              'Authorization': deviceInfo.apiToken
-            })),
-      );
+      late Response apiResponse;
 
+      if (kIsWeb) {
+        /// Execute the API call directly because web doesn't support isolates
+        apiResponse = await _uploadLogsRequest(dio, req, deviceInfo);
+      } else {
+        /// Run API call inside an isolate to keep UI thread free
+        apiResponse = await Isolate.run(
+              () => _uploadLogsRequest(dio, req, deviceInfo),
+        );
+      }
       if (logUploadingResponse != null) {
         logUploadingResponse!(apiResponse);
       }
@@ -412,6 +415,25 @@ ${_maskUserData(message)}
       return false;
     }
   }
+
+  /// Makes the actual API request to upload logs to the server.
+  Future<Response> _uploadLogsRequest(
+      Dio dio,
+      Map<String, dynamic> req,
+      DeviceInfo deviceInfo,
+      ) {
+    return dio.post(
+      _url,
+      data: req,
+      options: Options(
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': deviceInfo.apiToken,
+        },
+      ),
+    );
+  }
+
 
   /// [_createLogFile] creates a log file if it does not already exist.
   Future _createLogFile() async {
@@ -429,7 +451,7 @@ ${_maskUserData(message)}
   String _logName() {
     DeviceInfo deviceInfo = DeviceInfo.instance;
     if (deviceInfo.userId != null) {
-      return '${deviceInfo.userName ?? 'User'}_${deviceInfo.userId ?? 'id'}.log';
+      return '${deviceInfo.userName ?? 'User'}_${deviceInfo.userId ?? 'id'}_${deviceInfo.deviceID}.log';
     }
     return '${deviceInfo.deviceID}.log';
   }

@@ -1,3 +1,9 @@
+## 0.0.6
+
+* Migrated the example app to improve maintainability and ensure better compatibility with the latest development standards.
+* Updated dependencies to their latest versions for improved performance, stability, and security.
+* Replaced deprecated methods with modern alternatives to provide a smoother developer experience and ensure long-term compatibility.
+
 ## 0.0.5
 
 * Added an option to save network logs.
